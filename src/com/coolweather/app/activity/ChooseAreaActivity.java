@@ -77,6 +77,10 @@ public class ChooseAreaActivity extends Activity
 	 */
 	private int currentLevel;
 	
+	/**
+	 *是否从weatherActivity中跳转过来
+	 */
+	private boolean isFromWeatherActivity;
 	
 	
 	@Override
@@ -84,18 +88,21 @@ public class ChooseAreaActivity extends Activity
 	{
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
+		isFromWeatherActivity=getIntent().getBooleanExtra("from_weather_activity", false);
 		
 		/*
 		 *一开始就读取sharedPreferences文件读取city_selected标志位。
 		 *如果为true则说明当前已经选择过城市了，直接进行显示即可，转到weatherActivity即可。 
 		 */
 		SharedPreferences prefs=PreferenceManager.getDefaultSharedPreferences(this);
-		if(prefs.getBoolean("city_selected", false))
+		
+		//已经选择了城市并且不是从WeatherActivity跳转过来，才会直接跳转到WeatherActivity
+		if(prefs.getBoolean("city_selected", false)&&!isFromWeatherActivity)
 		{
 			Intent intent=new Intent(this,WeatherActivity.class);
 			startActivity(intent);
-			//finish();//?销毁了就不能返回了
-			//return;//?
+			finish();//?销毁了就不能返回了
+			return;//?
 		}
 		
 		
@@ -138,7 +145,7 @@ public class ChooseAreaActivity extends Activity
 					Intent intent=new Intent(ChooseAreaActivity.this,WeatherActivity.class);
 					intent.putExtra("county_code", countyCode);
 					startActivity(intent);
-					//finish();//销毁了就不能返回了
+					finish();//销毁了就不能返回了
 				}
 			}
 			
@@ -358,6 +365,15 @@ public class ChooseAreaActivity extends Activity
 		}
 		else 
 		{
+			/**
+			 * 当按下Back按键时，如果是从WeatherActivity跳转过来的，则应该重新跳转到WeatherActivity中去
+			 * 
+			 */
+			if(isFromWeatherActivity)
+			{
+				Intent intent=new Intent(this,WeatherActivity.class);
+				startActivity(intent);
+			}
 			finish();
 		}
 	}
