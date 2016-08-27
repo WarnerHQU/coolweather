@@ -5,8 +5,12 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -80,8 +84,24 @@ public class ChooseAreaActivity extends Activity
 	{
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
+		
+		/*
+		 *一开始就读取sharedPreferences文件读取city_selected标志位。
+		 *如果为true则说明当前已经选择过城市了，直接进行显示即可，转到weatherActivity即可。 
+		 */
+		SharedPreferences prefs=PreferenceManager.getDefaultSharedPreferences(this);
+		if(prefs.getBoolean("city_selected", false))
+		{
+			Intent intent=new Intent(this,WeatherActivity.class);
+			startActivity(intent);
+			//finish();//?销毁了就不能返回了
+			//return;//?
+		}
+		
+		
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.choose_area);
+		
 		listView=(ListView)findViewById(R.id.list_view);
 		textText=(TextView)findViewById(R.id.title_text);
 		
@@ -111,6 +131,14 @@ public class ChooseAreaActivity extends Activity
 					selectedCity=cityList.get(index);
 					queryCounties();//加载县级数据
 					
+				}
+				else if(currentLevel==LEVEL_COUNTY)
+				{
+					String countyCode=countyList.get(index).getCountyCode();
+					Intent intent=new Intent(ChooseAreaActivity.this,WeatherActivity.class);
+					intent.putExtra("county_code", countyCode);
+					startActivity(intent);
+					//finish();//销毁了就不能返回了
 				}
 			}
 			
@@ -332,6 +360,14 @@ public class ChooseAreaActivity extends Activity
 		{
 			finish();
 		}
+	}
+
+	@Override
+	protected void onDestroy()
+	{
+		// TODO Auto-generated method stub
+		super.onDestroy();
+		Log.d("xiefengWeather", "onDestroy");
 	}
 	
 	
