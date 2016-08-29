@@ -16,6 +16,7 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -82,7 +83,10 @@ public class ChooseAreaActivity extends Activity
 	 */
 	private boolean isFromWeatherActivity;
 	
-	
+	/**
+	 * 选择布局的对象
+	 */
+	private LinearLayout chooseAreaLayout;
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -90,6 +94,8 @@ public class ChooseAreaActivity extends Activity
 		super.onCreate(savedInstanceState);
 		isFromWeatherActivity=getIntent().getBooleanExtra("from_weather_activity", false);
 		
+		
+		//Toast.makeText(this, "Start", Toast.LENGTH_SHORT).show();
 		/*
 		 *一开始就读取sharedPreferences文件读取city_selected标志位。
 		 *如果为true则说明当前已经选择过城市了，直接进行显示即可，转到weatherActivity即可。 
@@ -108,6 +114,19 @@ public class ChooseAreaActivity extends Activity
 		
 		this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.choose_area);
+		
+		chooseAreaLayout=(LinearLayout) findViewById(R.id.tv);
+		//Snackbar.make(chooseAreaLayout, "SnackBar started", Snackbar.LENGTH_LONG).show();
+		/*Snackbar.make(chooseAreaLayout, "Snackbar comes out", Snackbar.LENGTH_LONG) 
+				.setAction("Action", new View.OnClickListener() 
+										{ @Override 
+												public void onClick(View v) 
+													{ 
+														Toast.makeText(ChooseAreaActivity.this, "Toast comes out", 
+																    Toast.LENGTH_SHORT).show(); 
+													} 
+										}).show();*/
+		
 		
 		listView=(ListView)findViewById(R.id.list_view);
 		textText=(TextView)findViewById(R.id.title_text);
@@ -128,6 +147,7 @@ public class ChooseAreaActivity extends Activity
 			{
 				// TODO Auto-generated method stub
 				//Toast.makeText(ChooseAreaActivity.this, "this is a joke", Toast.LENGTH_SHORT).show();
+				
 				if(currentLevel==LEVEL_PROVINCE)
 				{
 					selectedProvince=provinceList.get(index);
