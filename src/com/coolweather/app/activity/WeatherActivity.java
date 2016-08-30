@@ -69,6 +69,11 @@ public class WeatherActivity extends Activity implements OnClickListener
 	 */
 	private Button refreshWeather;
 	
+	/**
+	 * 定位按钮
+	 */
+	private Button locateSelf;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -86,13 +91,15 @@ public class WeatherActivity extends Activity implements OnClickListener
 		temp2Text=(TextView) findViewById(R.id.temp2);
 		currentDataText=(TextView) findViewById(R.id.current_data);
 		String countyCode=getIntent().getStringExtra("county_code");
+		boolean flag=getIntent().getBooleanExtra("me", false);
 		
 		//初始化按钮
 		switchCity=(Button) findViewById(R.id.switch_city);
 		refreshWeather=(Button) findViewById(R.id.refresh_weather);
 		switchCity.setOnClickListener(this);
 		refreshWeather.setOnClickListener(this);
-		
+		locateSelf=(Button) findViewById(R.id.locate_self_btn);
+		locateSelf.setOnClickListener(this);
 		
 		if(!TextUtils.isEmpty(countyCode))
 		{
@@ -239,6 +246,12 @@ public class WeatherActivity extends Activity implements OnClickListener
 			{
 				queryWeatherInfo(weatherCode);
 			}
+			break;
+		case R.id.locate_self_btn:
+			Intent mapIntent=new Intent(this,MapActivity.class);
+			mapIntent.putExtra("from_weather_to_map", true);
+			startActivity(mapIntent);
+			finish();
 			break;
 		default:
 			break;

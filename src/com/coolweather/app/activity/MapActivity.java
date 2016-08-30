@@ -4,6 +4,7 @@ import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -81,7 +82,7 @@ public class MapActivity extends Activity
 			
 			navigateTo(location);
 		}
-		locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
+		locationManager.requestLocationUpdates(provider, 10, 1, locationListener);
 		
 		
 	}
@@ -99,6 +100,7 @@ public class MapActivity extends Activity
 		{
 			locationManager.removeUpdates(locationListener);
 		}
+		
 	}
 	@Override
 	protected void onPause()
@@ -177,6 +179,26 @@ public class MapActivity extends Activity
 		MyLocationData locationData=locationBuilder.build();
 		baiduMap.setMyLocationData(locationData);
 		
+		String message="Latitude is "+location.getLatitude()+
+				       "\n"+"Longitude is "+location.getLongitude();
+		Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+	}
+	@Override
+	public void onBackPressed()
+	{
+		// TODO Auto-generated method stub
+		//super.onBackPressed();
+		/**
+		 * 按返回键的处理，返回到weatherActivity
+		 * 可以返回通过定位获得的地点信息，直接传回WeatherActivity进行处理跟数据的显示
+		 * 
+		 */
+		if(getIntent().getBooleanExtra("from_weather_to_map",false))
+		{
+			Intent intent=new Intent(this,WeatherActivity.class);
+			intent.putExtra("me", true);
+			startActivity(intent);
+		}
 	}
 	
 }
