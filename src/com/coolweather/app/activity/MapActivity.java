@@ -15,6 +15,7 @@ import com.baidu.mapapi.map.BaiduMap;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
 import com.coolweather.app.R;
 
@@ -26,6 +27,10 @@ public class MapActivity extends Activity
 	
 	private String provider;
 	
+	/**
+	 * 变量isFirstLocate是为了防止多次调用animateMapStatus()方法
+	 * 因为将地图移动到我们当前的位置只需要在程序第一次定位的时候调用就可以了
+	 */
 	private boolean isFirstLocate=true;
 	
 	private LocationManager locationManager;
@@ -41,13 +46,8 @@ public class MapActivity extends Activity
 		setContentView(R.layout.map_layout);
 		mapView=(MapView) findViewById(R.id.bmapView);
 		baiduMap=mapView.getMap();
-		
-		/*
-		LatLng ll=new LatLng(118.085897,24.634831);
-		MapStatusUpdate update=MapStatusUpdateFactory.newLatLng(ll);
-		baiduMap.animateMapStatus(update);*/
-		
-		
+		//开启才能显示位置
+		baiduMap.setMyLocationEnabled(true);
 		
 		locationManager=(LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		//获取所有可能的位置提供器
@@ -57,6 +57,10 @@ public class MapActivity extends Activity
 		{
 			provider=LocationManager.NETWORK_PROVIDER;
 			
+		}
+		else if(providerList.contains(LocationManager.PASSIVE_PROVIDER))
+		{
+			provider=LocationManager.PASSIVE_PROVIDER;
 		}
 		else if(providerList.contains(LocationManager.GPS_PROVIDER))
 		{
@@ -88,6 +92,8 @@ public class MapActivity extends Activity
 		super.onDestroy();
 		//在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理 
 		mapView.onDestroy();
+		
+		baiduMap.setMyLocationEnabled(false);
 		
 		if(locationManager!=null)
 		{
@@ -153,27 +159,24 @@ public class MapActivity extends Activity
 												};
 	private  void navigateTo(Location location)
 	{
-		/*
+		if(isFirstLocate)
+		{
+			//设置定位纬经度
+			LatLng ll=new LatLng(location.getLatitude(),location.getLongitude());
+			MapStatusUpdate update=MapStatusUpdateFactory.newLatLng(ll);
+			baiduMap.animateMapStatus(update);
+			//设置放大比例
+			update=MapStatusUpdateFactory.zoomTo(16f);
+			baiduMap.animateMapStatus(update);
+			isFirstLocate=false;
+		}
+		
 		MyLocationData.Builder locationBuilder=new MyLocationData.Builder();
 		locationBuilder.latitude(location.getLatitude());
 		locationBuilder.longitude(location.getLongitude());
 		MyLocationData locationData=locationBuilder.build();
 		baiduMap.setMyLocationData(locationData);
-		baiduMap.setMyLocationEnabled(true);*/
-		/*
-		String currentPositon="Latitude is "+location.getLatitude()+"\n"
-		                      +"Longitude is "+location.getLongitude();
-		Toast.makeText(this, currentPositon, Toast.LENGTH_SHORT).show();
-		*/
-		if(isFirstLocate)
-		{
-			LatLng ll=new LatLng(location.getLatitude(),location.getLongitude());
-			MapStatusUpdate update=MapStatusUpdateFactory.newLatLng(ll);
-			baiduMap.animateMapStatus(update);
-			update=MapStatusUpdateFactory.zoomTo(16f);
-			baiduMap.animateMapStatus(update);
-			//isFirstLocate=false;
-		}
+		
 	}
 	
 }
