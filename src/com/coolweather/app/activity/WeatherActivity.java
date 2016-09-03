@@ -12,6 +12,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.coolweather.app.R;
 import com.coolweather.app.service.AutoUpdateService;
@@ -93,6 +94,7 @@ public class WeatherActivity extends Activity implements OnClickListener
 		String countyCode=getIntent().getStringExtra("county_code");
 		boolean flag=getIntent().getBooleanExtra("me", false);
 		
+		
 		//初始化按钮
 		switchCity=(Button) findViewById(R.id.switch_city);
 		refreshWeather=(Button) findViewById(R.id.refresh_weather);
@@ -101,23 +103,42 @@ public class WeatherActivity extends Activity implements OnClickListener
 		locateSelf=(Button) findViewById(R.id.locate_self_btn);
 		locateSelf.setOnClickListener(this);
 		
-		if(!TextUtils.isEmpty(countyCode))
+		//获得从地图的返回信息
+		String selfPosition=getIntent().getStringExtra("self_position");
+		if(!TextUtils.isEmpty(selfPosition))
 		{
-			//有县级代号就去查询天气
 			publishText.setText("同步中...");
 			weatherInfoLayout.setVisibility(View.INVISIBLE);
 			cityNameText.setVisibility(View.INVISIBLE);
-			queryWeatherCode(countyCode);
+			queryFromMap(selfPosition);
 		}
 		else
 		{
-			//没有县级代号就直接显示本地天气
-			showWeather();
+			if(!TextUtils.isEmpty(countyCode))
+			{
+				//有县级代号就去查询天气
+				publishText.setText("同步中...");
+				weatherInfoLayout.setVisibility(View.INVISIBLE);
+				cityNameText.setVisibility(View.INVISIBLE);
+				queryWeatherCode(countyCode);
+			}
+			else
+			{
+				//没有县级代号就直接显示本地天气
+				showWeather();
+			}
 		}
-		
 	}
 	
 	
+	private void queryFromMap(String location)
+	{
+		
+		Toast.makeText(this, location, Toast.LENGTH_SHORT).show();
+		queryWeatherCode(location);
+	}
+
+
 	/*
 	 * 查询县级代号对应的天气代号
 	 */

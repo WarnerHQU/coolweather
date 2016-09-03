@@ -11,6 +11,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.baidu.mapapi.SDKInitializer;
@@ -27,6 +28,12 @@ import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.coolweather.app.R;
+import com.coolweather.app.model.City;
+import com.coolweather.app.model.CoolWeatherDB;
+import com.coolweather.app.model.County;
+import com.coolweather.app.model.Province;
+import com.coolweather.app.util.HttpCallbackListener;
+import com.coolweather.app.util.HttpUtil;
 
 public class MapActivity extends Activity
 {
@@ -144,6 +151,7 @@ public class MapActivity extends Activity
 				// result保存翻地理编码的结果 坐标-->城市
 				myPosition=result.getAddress();
 				showAlertDialog(myPosition+"?");
+				handleReverseGeoCodeData(myPosition);
 			}
 
 			
@@ -314,5 +322,138 @@ public class MapActivity extends Activity
 			intent.putExtra("self_position", myPosition);
 			startActivity(intent);
 		}
+	}
+
+	
+	/**
+	 * 将数据解析成weatherCode提供给weatherActivity进行显示
+	 * @param data
+	 */
+	public void handleReverseGeoCodeData(String data)
+	{
+		String[] ap=data.split("省");
+		String[] bc=ap[1].split("市");
+		String[] cc=bc[1].split("区");
+		
+		CoolWeatherDB weatherDB=CoolWeatherDB.getInstance(this);
+		List<Province> provinceList=weatherDB.loadProvince();
+		String weatherCodeFromMap;
+		for(int i=0;i<provinceList.size()-1;++i)
+		{
+			//省名相同
+			if(provinceList.get(i).getProvinceName().equals(ap[0]))
+			{
+				weatherCodeFromMap=provinceList.get(i).getProvinceCode();
+				
+				final int tempProvinceCode=Integer.parseInt(weatherCodeFromMap);
+				final String bc_name=bc[0];
+				final String cc_name=cc[0];
+				HttpUtil.sendHttpRequest("http://www.weather.com.cn/data/list3/city"+weatherCodeFromMap+".xml",
+						       new HttpCallbackListener()
+								{
+
+									@Override
+									public void onFinish(String response)
+									{
+										if(!TextUtils.isEmpty(response))
+										{
+											String[] allCities=response.split(",");
+											if(allCities!=null&&allCities.length>0)
+											{
+												for(String c:allCities)
+												{
+													String[] array=c.split("\\|");
+													City city=new City();
+													city.setCityCode(array[0]);
+													city.setCityName(array[1]);
+													city.setProvinceId(tempProvinceCode);
+													//城市名相同
+													if(city.getCityName().equals(bc_name))
+													{
+														final int tempCityCode=Integer.parseInt(city.getCityCode());
+														HttpUtil.sendHttpRequest("http://www.weather.com.cn/data/list3/city"+
+																						tempCityCode+".xml",
+															       new HttpCallbackListener()
+														{
+
+															@Override
+															public void onFinish(
+																	String response)
+															{
+																
+																if(!TextUtils.isEmpty(response))
+																{
+																	String[] allCounties=response.split(",");
+																	if(allCounties!=null&&allCounties.length>0)
+																	{
+																		for(String c:allCounties)
+																		{
+																			String[] array=c.split("\\|");
+																			County county=new County();
+																			county.setCountyCode(array[0]);
+																			county.setCountyName(array[1]);
+																			county.setCityId(tempCityCode);
+																			
+																			if(county.getCountyName().equals(cc_name))
+																			{
+																				myPosition=tempCityCode+county.getCountyCode();
+																			}
+																			
+																		}
+																		if(!TextUtils.isEmpty(myPosition))
+																		{
+																			//如果不存在则设置成第一个
+																			myPosition=tempCityCode+"01";
+																		}
+																	
+																	}
+																}
+																
+															}
+
+															@Override
+															public void onError(
+																	Exception e)
+															{
+																
+																runOnUiThread(new Runnable()
+																{
+																	public void run()
+																	{
+																		Toast.makeText(MapActivity.this,
+																				"县区自动定位失败", Toast.LENGTH_SHORT).show();	
+																	}
+																	
+																});
+															}
+															
+														});
+													}
+												}
+												
+											}
+										}
+									}
+
+									@Override
+									public void onError(Exception e)
+									{
+										runOnUiThread(new Runnable()
+										{
+											public void run()
+											{
+												Toast.makeText(MapActivity.this,
+														"城市自动定位失败", Toast.LENGTH_SHORT).show();	
+											}
+											
+										});
+										
+									}
+									
+								});
+				
+			}
+		}
+	
 	}
 }
