@@ -3,7 +3,9 @@ package com.coolweather.app.activity;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
@@ -18,6 +20,12 @@ import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.geocode.GeoCodeResult;
+import com.baidu.mapapi.search.geocode.GeoCoder;
+import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.coolweather.app.R;
 
 public class MapActivity extends Activity
@@ -35,6 +43,18 @@ public class MapActivity extends Activity
 	private boolean isFirstLocate=true;
 	
 	private LocationManager locationManager;
+	
+	
+	/**
+	 * 反向地理编码
+	 */
+	private GeoCoder mSearch =null;
+	
+	/**
+	 * 存储定位的位置地点
+	 */
+	private String myPosition=null;
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -76,6 +96,61 @@ public class MapActivity extends Activity
 		}
 		
 		Location location=locationManager.getLastKnownLocation(provider);
+		
+
+		// 搜索初始化
+		
+		mSearch = GeoCoder.newInstance();
+		mSearch.setOnGetGeoCodeResultListener(new OnGetGeoCoderResultListener() {
+			// 正向编码
+			@Override
+			public void onGetGeoCodeResult(GeoCodeResult result)
+			{
+				if (result == null
+						|| result.error != SearchResult.ERRORNO.NO_ERROR)
+				{
+					Toast.makeText(MapActivity.this, "抱歉，未能找到结果",
+							Toast.LENGTH_LONG).show();
+					return;
+				}
+				baiduMap.setMapStatus(MapStatusUpdateFactory.newLatLng(result
+						.getLocation()));
+				// 定位
+				String strInfo = String.format("纬度：%f 经度：%f",
+						result.getLocation().latitude,
+						result.getLocation().longitude);
+				Toast.makeText(MapActivity.this, strInfo, Toast.LENGTH_LONG)
+						.show();
+				// result保存地理编码的结果 城市-->坐标
+
+			}
+
+			// 反向编码
+			@Override
+			public void onGetReverseGeoCodeResult(ReverseGeoCodeResult result)
+			{
+				if (result == null
+						|| result.error != SearchResult.ERRORNO.NO_ERROR)
+				{
+					Toast.makeText(MapActivity.this, "抱歉，未能找到结果",
+							Toast.LENGTH_LONG).show();
+					return;
+				}
+				baiduMap.setMapStatus(MapStatusUpdateFactory.newLatLng(result
+						.getLocation()));
+				// 定位
+				//Toast.makeText(MapActivity.this, result.getAddress(),
+				//		Toast.LENGTH_LONG).show();
+				// result保存翻地理编码的结果 坐标-->城市
+				myPosition=result.getAddress();
+				showAlertDialog(myPosition+"?");
+			}
+
+			
+
+			
+
+		});
 		
 		if(location!=null)
 		{
@@ -171,6 +246,11 @@ public class MapActivity extends Activity
 			update=MapStatusUpdateFactory.zoomTo(16f);
 			baiduMap.animateMapStatus(update);
 			isFirstLocate=false;
+			
+			if (mSearch != null)
+			{
+				mSearch.reverseGeoCode(new ReverseGeoCodeOption().location(ll));
+			}
 		}
 		
 		MyLocationData.Builder locationBuilder=new MyLocationData.Builder();
@@ -193,12 +273,46 @@ public class MapActivity extends Activity
 		 * 可以返回通过定位获得的地点信息，直接传回WeatherActivity进行处理跟数据的显示
 		 * 
 		 */
-		if(getIntent().getBooleanExtra("from_weather_to_map",false))
+		CallBackMess();
+	}
+	
+	
+	
+	private void showAlertDialog(String tips)
+	{
+		AlertDialog.Builder dialog=new AlertDialog.Builder(MapActivity.this);
+		dialog.setTitle("This is a location dialog");
+		dialog.setMessage(tips);
+		dialog.setCancelable(false);
+		dialog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				CallBackMess();
+				
+			}
+		});
+		dialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which)
+			{
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		dialog.show();
+		
+	}
+	
+	public void CallBackMess()
+	{
+		if (getIntent().getBooleanExtra("from_weather_to_map", false))
 		{
-			Intent intent=new Intent(this,WeatherActivity.class);
-			intent.putExtra("me", true);
+			Intent intent = new Intent(this, WeatherActivity.class);
+			intent.putExtra("self_position", myPosition);
 			startActivity(intent);
 		}
 	}
-	
 }
